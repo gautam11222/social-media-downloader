@@ -1,6 +1,4 @@
 Manifest-Version: 1.0
 Build-Jdk-Spec: 22
-Implementation-Title: Social Media Downloader with yt-dlp
-Implementation-Version: 1.0.0
 Created-By: Maven Integration for Eclipse
 

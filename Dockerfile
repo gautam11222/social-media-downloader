@@ -1,32 +1,20 @@
-FROM ubuntu:24.04
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Install dependencies: openjdk, ffmpeg, python3, pip, clamav
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless \
-    ffmpeg \
-    python3 \
-    python3-pip \
-    curl \
-    ca-certificates \
-    clamav \
-    clamav-daemon \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install yt-dlp
-RUN pip3 install yt-dlp
-
-# Copy app jar
+# ---------- build ----------
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY target/socialdownloader-1.0.0.jar /app/socialdownloader.jar
+COPY pom.xml .
+COPY src ./src
+RUN mvn -q -DskipTests package
 
-# Update ClamAV database
-RUN freshclam || true
+# ---------- runtime ----------
+FROM eclipse-temurin:17-jre AS runtime
+WORKDIR /app
 
-# Add entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      wget ffmpeg ca-certificates clamav && \
+    rm -rf /var/lib/apt/lists/*
+RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
+    chmod +x /usr/local/bin/yt-dlp
 
+COPY --from=build /app/target/*.jar /app/app.jar
 EXPOSE 8080
-CMD ["/app/entrypoint.sh"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]

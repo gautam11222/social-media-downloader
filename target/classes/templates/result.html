@@ -1,0 +1,40 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title th:text="${info.title}">Result</title>
+</head>
+<body>
+  <a href="/">← Back</a>
+  <h1 th:text="${info.title}">Title</h1>
+  <div>
+    <img th:src="@{'/static/placeholder.png'}" id="thumb" alt="thumbnail" style="max-width:400px">
+  </div>
+  <div>
+    <h3>Available formats</h3>
+    <table border="1">
+      <thead><tr><th>Format ID</th><th>Ext</th><th>Resolution/Note</th><th>Download</th></tr></thead>
+      <tbody th:each="f : ${info.formats}">
+        <tr>
+          <td th:text="${f.format_id}">fid</td>
+          <td th:text="${f.ext}">mp4</td>
+          <td th:text="${f.format}">res</td>
+          <td><a th:href="@{'/download'(url=${url},format=${f.format_id})}">Download</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    const info = /*[[${info}]]*/ null;
+    (async ()=>{
+      if (!info) return;
+      const thumb = info.thumbnail;
+      if (thumb) {
+        document.getElementById('thumb').src = thumb;
+      }
+    })();
+    /*]]>*/
+  </script>
+</body>
+</html>
