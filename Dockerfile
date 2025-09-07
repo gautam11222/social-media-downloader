@@ -1,43 +1,52 @@
-# ========================
-# Stage 1: Build the app
-# ========================
-FROM maven:3.9.6-eclipse-temurin-17 AS build
-WORKDIR /app
+# Multi-stage build for efficiency
+FROM eclipse-temurin:17-jdk AS builder
 
-# Copy Maven files and source
+WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-# Build Spring Boot fat jar (with repackage)
-RUN mvn -q clean package -DskipTests
+# Build the application
+RUN ./mvnw clean package -DskipTests
 
-# ========================
-# Stage 2: Runtime
-# ========================
-FROM eclipse-temurin:17-jre AS runtime
+# Production stage
+FROM eclipse-temurin:17-jre-alpine
+
+# Install required packages
+RUN apk update && apk add --no-cache \
+    python3 \
+    py3-pip \
+    ffmpeg \
+    wget \
+    curl \
+    bash \
+    clamav \
+    freshclam \
+    && rm -rf /var/cache/apk/*
+
+# Install yt-dlp
+RUN pip3 install --no-cache-dir yt-dlp
+
+# Create app directory
 WORKDIR /app
 
-# Install python3 (needed for yt-dlp), ffmpeg, clamav
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      wget \
-      ffmpeg \
-      ca-certificates \
-      clamav \
-      python3 && \
-    rm -rf /var/lib/apt/lists/*
+# Copy built jar from builder stage
+COPY --from=builder /app/target/socialdownloader.jar socialdownloader.jar
 
-# Install latest yt-dlp
-RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp && \
-    chmod +x /usr/local/bin/yt-dlp
+# Copy entrypoint script
+COPY entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
 
-# Copy built jar from build stage
-COPY --from=build /app/target/*.jar /app/app.jar
+# Create temp directory for downloads
+RUN mkdir -p /tmp/socialdownloader
 
-# Update ClamAV definitions (ignore errors if offline)
-RUN freshclam || true
+# Update ClamAV database
+RUN freshclam --quiet || true
 
-# Expose port for Render
+# Expose port
 EXPOSE 8080
 
-# Run Spring Boot app
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+# Set JVM options for container
+ENV JAVA_OPTS="-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom"
+
+# Run the application
+ENTRYPOINT ["/bin/bash", "./entrypoint.sh"]

@@ -28,13 +28,14 @@ public class YtDlpService {
     public JsonNode fetchInfo(String url) throws IOException, InterruptedException {
         log.info("Fetching info for URL: {}", url);
         
-        // Strategy 1: No cookies, basic extraction
+        // Strategy 1: No cookies, basic extraction (FIXES CHROME ERROR)
         List<String> basicCmd = Arrays.asList(
             "yt-dlp", "-j", 
             "--no-warnings", 
             "--no-call-home",
             "--no-cookies-from-browser",  // IMPORTANT: Disable cookie extraction
             "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "--socket-timeout", "15",
             url
         );
         
@@ -52,13 +53,13 @@ public class YtDlpService {
             "--no-call-home", 
             "--no-cookies-from-browser",
             "--force-ipv4",
-            "--socket-timeout", "15",
+            "--socket-timeout", "20",
             url
         );
         
         try {
             log.info("Trying IPv4 extraction...");
-            return executeCommand(ipv4Cmd, 25);
+            return executeCommand(ipv4Cmd, 35);
         } catch (IOException e) {
             log.warn("IPv4 extraction failed: {}", e.getMessage());
         }
@@ -68,12 +69,13 @@ public class YtDlpService {
             "yt-dlp", "-j",
             "--no-warnings",
             "--ignore-errors",
+            "--no-cookies-from-browser",
             url
         );
         
         try {
             log.info("Trying simple extraction...");
-            return executeCommand(simpleCmd, 20);
+            return executeCommand(simpleCmd, 25);
         } catch (IOException e) {
             log.warn("Simple extraction failed: {}", e.getMessage());
         }
@@ -93,7 +95,7 @@ public class YtDlpService {
             "--no-warnings",
             "--no-call-home",
             "--no-cookies-from-browser",  // IMPORTANT: Disable cookie extraction
-            "--socket-timeout", "20",
+            "--socket-timeout", "25",
             "--retries", "3"
         ));
         cmd.add(url);
@@ -150,12 +152,15 @@ public class YtDlpService {
     private String filterErrorMessage(String output) {
         // Remove cookie-related errors from user messages
         if (output.contains("Chrome cookie database")) {
-            return "Connection failed - trying alternative method";
+            return "Connection temporarily blocked - trying alternative method";
         }
         if (output.contains("Sign in to confirm")) {
-            return "Rate limited - please try again later";
+            return "Content requires authentication - please try a different URL";
         }
-        return output.length() > 100 ? output.substring(0, 100) + "..." : output;
+        if (output.contains("Private video")) {
+            return "This video is private and cannot be downloaded";
+        }
+        return output.length() > 150 ? output.substring(0, 150) + "..." : output;
     }
     
     private String buildUserFriendlyError(String url) {
@@ -165,18 +170,21 @@ public class YtDlpService {
             This could be due to:
             • Content is private or requires login
             • Geographic restrictions
-            • Rate limiting
+            • Rate limiting from the platform
+            • Network connectivity issues
             
             💡 Try:
             • Different video URL
             • Wait 30 minutes and try again
             • Use VPN if content is geo-blocked
+            • Check if the content is publicly accessible
             """, detectPlatform(url));
     }
     
     private String detectPlatform(String url) {
         if (url.contains("youtube.com") || url.contains("youtu.be")) return "YouTube";
         if (url.contains("instagram.com")) return "Instagram";
+        if (url.contains("tiktok.com")) return "TikTok";
         return "this platform";
     }
     
@@ -196,7 +204,7 @@ public class YtDlpService {
             }
             
             if (latest == null) {
-                throw new IOException("No downloaded file found");
+                throw new IOException("No downloaded file found in " + outDir);
             }
             
             return latest;
