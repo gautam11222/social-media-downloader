@@ -3,14 +3,17 @@ FROM maven:3.9.3-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Copy entire project (includes .mvn and mvnw)
-COPY . .
+# Copy pom.xml first for dependency caching
+COPY pom.xml .
 
-# Fix permissions for mvnw
-RUN chmod +x mvnw
+# Download dependencies (cached layer)
+RUN mvn dependency:go-offline -B
 
-# Build the project
-RUN ./mvnw clean package -DskipTests
+# Copy source code
+COPY src ./src
+
+# Build with Maven directly (no wrapper needed)
+RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime
 FROM eclipse-temurin:17-jre
@@ -28,21 +31,19 @@ RUN apt-get update && apt-get install -y \
     clamav-daemon \
     && rm -rf /var/lib/apt/lists/*
 
-# Install yt-dlp (FIX: Add --break-system-packages flag)
+# Install yt-dlp with system package override
 RUN pip3 install --no-cache-dir yt-dlp --break-system-packages
 
-# Copy built jar from builder stage
+# Copy built jar
 COPY --from=builder /app/target/*.jar app.jar
 
-# Copy entrypoint script
+# Copy entrypoint
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 # Create temp directory
 RUN mkdir -p /tmp/socialdownloader
 
-# Expose port
 EXPOSE 8080
 
-# Run the application
 ENTRYPOINT ["/bin/bash", "./entrypoint.sh"]
