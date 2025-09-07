@@ -33,7 +33,7 @@ public class YtDlpService {
             "yt-dlp", "-j", 
             "--no-warnings", 
             "--no-call-home",
-            "--no-cookies-from-browser",  // IMPORTANT: Disable cookie extraction
+            "--no-cookies-from-browser",  // CRITICAL: Prevents Chrome cookie error
             "--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "--socket-timeout", "15",
             url
@@ -64,22 +64,6 @@ public class YtDlpService {
             log.warn("IPv4 extraction failed: {}", e.getMessage());
         }
         
-        // Strategy 3: Simple fallback
-        List<String> simpleCmd = Arrays.asList(
-            "yt-dlp", "-j",
-            "--no-warnings",
-            "--ignore-errors",
-            "--no-cookies-from-browser",
-            url
-        );
-        
-        try {
-            log.info("Trying simple extraction...");
-            return executeCommand(simpleCmd, 25);
-        } catch (IOException e) {
-            log.warn("Simple extraction failed: {}", e.getMessage());
-        }
-        
         throw new IOException(buildUserFriendlyError(url));
     }
     
@@ -94,7 +78,7 @@ public class YtDlpService {
             "-o", outDir.toAbsolutePath().toString() + "/%(title)s.%(ext)s",
             "--no-warnings",
             "--no-call-home",
-            "--no-cookies-from-browser",  // IMPORTANT: Disable cookie extraction
+            "--no-cookies-from-browser",  // CRITICAL: Prevents Chrome cookie error
             "--socket-timeout", "25",
             "--retries", "3"
         ));
@@ -150,9 +134,9 @@ public class YtDlpService {
     }
     
     private String filterErrorMessage(String output) {
-        // Remove cookie-related errors from user messages
+        // Remove technical errors, show user-friendly messages
         if (output.contains("Chrome cookie database")) {
-            return "Connection temporarily blocked - trying alternative method";
+            return "Temporary connection issue - trying alternative method";
         }
         if (output.contains("Sign in to confirm")) {
             return "Content requires authentication - please try a different URL";
@@ -164,6 +148,7 @@ public class YtDlpService {
     }
     
     private String buildUserFriendlyError(String url) {
+        String platform = detectPlatform(url);
         return String.format("""
             ❌ Unable to access content from %s
             
@@ -178,7 +163,7 @@ public class YtDlpService {
             • Wait 30 minutes and try again
             • Use VPN if content is geo-blocked
             • Check if the content is publicly accessible
-            """, detectPlatform(url));
+            """, platform);
     }
     
     private String detectPlatform(String url) {
