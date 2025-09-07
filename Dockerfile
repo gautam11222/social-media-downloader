@@ -4,11 +4,11 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy Maven files
+# Copy Maven files and source
 COPY pom.xml .
 COPY src ./src
 
-# Build Spring Boot jar
+# Build Spring Boot fat jar (with repackage)
 RUN mvn -q clean package -DskipTests
 
 # ========================
@@ -17,9 +17,13 @@ RUN mvn -q clean package -DskipTests
 FROM eclipse-temurin:17-jre AS runtime
 WORKDIR /app
 
-# Install ffmpeg, yt-dlp, clamav
+# Install python3 (needed for yt-dlp), ffmpeg, clamav
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      wget ffmpeg ca-certificates clamav && \
+      wget \
+      ffmpeg \
+      ca-certificates \
+      clamav \
+      python3 && \
     rm -rf /var/lib/apt/lists/*
 
 # Install latest yt-dlp
@@ -29,7 +33,7 @@ RUN wget -O /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/late
 # Copy built jar from build stage
 COPY --from=build /app/target/*.jar /app/app.jar
 
-# Update ClamAV definitions (skip if fails)
+# Update ClamAV definitions (ignore errors if offline)
 RUN freshclam || true
 
 # Expose port for Render
