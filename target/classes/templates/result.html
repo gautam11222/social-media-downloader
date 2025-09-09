@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Media - Social Downloader</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        .media-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .download-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .download-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn-secondary {
+            background: linear-gradient(45deg, #3498db, #9b59b6);
+        }
+        .thumbnail {
+            max-width: 200px;
+            border-radius: 10px;
+            margin: 10px;
+        }
+        .format-selector {
+            margin: 15px 0;
+        }
+        select {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+        }
+        .platform-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Media Information</h1>
+        
+        <div class="media-info" th:if="${info}">
+            <div class="platform-badge" th:if="${platform}" th:text="'Platform: ' + ${platform}">Platform</div>
+            
+            <h3 th:text="${info.title}">Video Title</h3>
+            <p><strong>Duration:</strong> <span th:text="${info.duration + ' seconds'}">Duration</span></p>
+            <p><strong>View Count:</strong> <span th:text="${info.view_count}">Views</span></p>
+            <p><strong>Uploader:</strong> <span th:text="${info.uploader}">Channel Name</span></p>
+            
+            <div th:if="${info.thumbnail}">
+                <a th:href="@{/thumbnail(url=${url})}" target="_blank">
+                    <img th:src="${info.thumbnail}" alt="Thumbnail" class="thumbnail">
+                </a>
+            </div>
+        </div>
+        
+        <div class="download-options">
+            <!-- Video Downloads -->
+            <div class="download-card">
+                <h3>📹 Video Downloads</h3>
+                <div class="format-selector">
+                    <select id="videoFormat">
+                        <option value="best[height<=720]">720p (Best Quality)</option>
+                        <option value="best[height<=480]">480p (Good Quality)</option>
+                        <option value="best[height<=360]">360p (Lower Quality)</option>
+                        <option value="worst">Lowest Quality</option>
+                    </select>
+                </div>
+                <a href="#" class="btn" onclick="downloadVideo()">⬇️ Download Video</a>
+            </div>
+            
+            <!-- Audio Downloads -->
+            <div class="download-card">
+                <h3>🎵 Audio Downloads</h3>
+                <div class="format-selector">
+                    <select id="audioFormat">
+                        <option value="bestaudio[ext=m4a]">M4A (Best Quality)</option>
+                        <option value="bestaudio[ext=mp3]">MP3 (Compatible)</option>
+                        <option value="bestaudio">Best Audio Format</option>
+                        <option value="worstaudio">Lowest Quality Audio</option>
+                    </select>
+                </div>
+                <a href="#" class="btn" onclick="downloadAudio()">⬇️ Download Audio</a>
+            </div>
+            
+            <!-- Image Downloads -->
+            <div class="download-card">
+                <h3>🖼️ Images & Photos</h3>
+                <p>Download thumbnails and images</p>
+                <a th:href="@{/download(url=${url}, format='thumbnail', type='image')}" class="btn btn-secondary">⬇️ Download Images</a>
+                <a th:href="@{/thumbnail(url=${url})}" class="btn btn-secondary" target="_blank">👁️ View Thumbnail</a>
+            </div>
+        </div>
+        
+        <!-- Available Formats -->
+        <div th:if="${formats and not #lists.isEmpty(formats)}" class="media-info">
+            <h3>📋 Available Formats</h3>
+            <div style="max-height: 200px; overflow-y: auto;">
+                <ul>
+                    <li th:each="format : ${formats}" th:text="${format}">Format info</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
+            <a href="#" onclick="location.reload()" class="btn btn-secondary">🔄 Refresh Info</a>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        const url = /*[[${url}]]*/ '';
+        
+        function downloadVideo() {
+            const format = document.getElementById('videoFormat').value;
+            window.location.href = `/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(format)}&type=video`;
+        }
+        
+        function downloadAudio() {
+            const format = document.getElementById('audioFormat').value;
+            window.location.href = `/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(format)}&type=audio`;
+        }
+    </script>
+</body>
+</html>

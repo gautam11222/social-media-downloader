@@ -1,0 +1,5 @@
+body{background:#f3f6fb;font-family:Arial,Helvetica,sans-serif}
+.card{border-radius:12px}
+h1{font-size:1.6rem}
+.table th, .table td{vertical-align:middle}
+.btn-primary{background:#2563eb;border-color:#2563eb}

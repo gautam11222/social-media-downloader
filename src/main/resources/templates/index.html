@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Downloader</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            backdrop-filter: blur(5px);
+        }
+        input[type="url"]::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .error {
+            background: rgba(231, 76, 60, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            white-space: pre-line;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid rgba(255, 193, 7, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .warning h4 {
+            margin-top: 0;
+            color: #ffc107;
+        }
+        .test-urls {
+            background: rgba(52, 152, 219, 0.2);
+            border: 2px solid rgba(52, 152, 219, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-urls h4 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        .test-urls a {
+            color: #85c1e9;
+            text-decoration: none;
+            display: block;
+            margin: 5px 0;
+        }
+        .test-urls a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Social Media Downloader</h1>
+        
+        <div th:if="${error}" class="error">
+            ⚠️ <span th:text="${error}">Error message</span>
+        </div>
+        
+        <div class="warning">
+            <h4>🚨 Current YouTube Issues</h4>
+            <p><strong>YouTube is currently blocking many download requests.</strong> If you get timeout errors:</p>
+            <ul>
+                <li>🌐 Use a VPN to change your location</li>
+                <li>⏰ Wait 30-60 minutes before trying again</li>
+                <li>🔄 Try different video URLs</li>
+                <li>✅ Test with the sample URLs below first</li>
+            </ul>
+        </div>
+        
+        <form action="/fetch" method="get">
+            <div class="form-group">
+                <label for="url">📎 Enter Media URL:</label>
+                <input type="url" id="url" name="url" 
+                       placeholder="https://www.youtube.com/watch?v=..."
+                       required>
+            </div>
+            <button type="submit" class="btn">🔍 Get Media Info & Download</button>
+        </form>
+        
+        <div class="test-urls">
+            <h4>🧪 Test URLs (Try these first)</h4>
+            <p>Click these to test if the service is working:</p>
+            <a href="/fetch?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" onclick="setUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">
+                🎵 Rick Astley - Never Gonna Give You Up (Classic test video)
+            </a>
+            <a href="/fetch?url=https://www.youtube.com/watch?v=9bZkp7q19f0" onclick="setUrl('https://www.youtube.com/watch?v=9bZkp7q19f0')">
+                🎼 PSY - GANGNAM STYLE (Popular video)
+            </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <h3>✨ Features</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li>📹 Video Download</li>
+                <li>🎵 Audio Extract</li>
+                <li>🖼️ Thumbnail Download</li>
+                <li>🛡️ Virus Scanning</li>
+                <li>💾 Smart Caching</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function setUrl(url) {
+            event.preventDefault();
+            document.getElementById('url').value = url;
+            document.forms[0].submit();
+        }
+    </script>
+</body>
+</html>
