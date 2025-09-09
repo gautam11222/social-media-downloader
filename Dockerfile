@@ -1,28 +1,26 @@
-# Stage 1: Build Java app
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# Use Python 3.11 slim as base
+FROM python:3.11-slim
 
-WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn clean package -DskipTests
-
-# Stage 2: Runtime
-FROM openjdk:17-slim
-
-WORKDIR /app
-
-# Install Python 3.11, pip, ffmpeg, curl
+# Install Java 17, Maven, ffmpeg, curl
 RUN apt-get update && apt-get install -y \
-    python3.11 \
-    python3.11-venv \
-    python3.11-distutils \
+    openjdk-17-jdk \
+    maven \
     ffmpeg \
     curl \
-    && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 \
-    && pip3 install --no-cache-dir yt-dlp \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy JAR from build stage
-COPY --from=build /app/target/*.jar ./app.jar
+# Set working directory
+WORKDIR /app
 
-CMD ["java", "-jar", "app.jar"]
+# Copy Maven project files
+COPY pom.xml .
+COPY src ./src
+
+# Build Java project without running tests
+RUN mvn clean package -DskipTests
+
+# Install yt-dlp
+RUN pip install --no-cache-dir yt-dlp
+
+# Default command (optional, change as per your app)
+CMD ["java", "-jar", "target/your-app.jar"]
