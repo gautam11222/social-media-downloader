@@ -1,39 +1,45 @@
-# ------------------------------
-# Stage 1: Build Java Application
-# ------------------------------
+# ----------------------
+# Stage 1: Build Java App
+# ----------------------
 FROM maven:3.9.6-eclipse-temurin-17 AS build
+
 WORKDIR /app
 
-# Copy Maven files
-COPY pom.xml . 
+# Copy Maven files and source
+COPY pom.xml .
 COPY src ./src
 
-# Build the project and skip tests
+# Build the project (skip tests)
 RUN mvn clean package -DskipTests
 
+# ----------------------
+# Stage 2: Runtime Image
+# ----------------------
+FROM python:3.10-slim
 
-# ------------------------------
-# Stage 2: Runtime Environment
-# ------------------------------
-FROM openjdk:17-slim
-WORKDIR /app
-
-# Install Python 3.10, pip, ffmpeg, curl, and clean up
+# Install dependencies: Java runtime, ffmpeg, curl
 RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3.10-venv \
-    python3.10-distutils \
+    openjdk-17-jdk-headless \
     ffmpeg \
     curl \
-    && curl -sS https://bootstrap.pypa.io/get-pip.py | python3.10 \
-    && pip3 install --no-cache-dir yt-dlp \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the built jar from Stage 1
+WORKDIR /app
+
+# Copy built Java JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Expose your app port (change if needed)
+# Copy Python scripts (if any)
+COPY ./*.py ./
+
+# Install Python packages if requirements.txt exists
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt || echo "No requirements.txt found, skipping pip install"
+
+# Expose port if needed
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Default command: Run Python script (adjust if you want Java instead)
+CMD ["python3", "main.py"]
+# To run Java JAR instead:
+# CMD ["java", "-jar", "app.jar"]
