@@ -1,23 +1,21 @@
-# ----------------------
-# Stage 1: Build Java App
-# ----------------------
+# ---------- BUILD STAGE (Java build) ----------
 FROM maven:3.9.6-eclipse-temurin-17 AS build
-
 WORKDIR /app
 
-# Copy Maven files and source
+# Copy Maven project files
 COPY pom.xml .
 COPY src ./src
 
-# Build the project (skip tests)
+# Build the Java project (skip tests)
 RUN mvn clean package -DskipTests
 
-# ----------------------
-# Stage 2: Runtime Image
-# ----------------------
+# ---------- RUNTIME STAGE (Python + Java) ----------
 FROM python:3.10-slim
 
-# Install dependencies: Java runtime, ffmpeg, curl, venv, distutils
+# Set working directory
+WORKDIR /app
+
+# Install Java runtime, ffmpeg, curl, Python venv tools
 RUN apt-get update && apt-get install -y \
     openjdk-17-jdk-headless \
     ffmpeg \
@@ -26,22 +24,21 @@ RUN apt-get update && apt-get install -y \
     python3-distutils \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
-# Copy built Java JAR from build stage
+# Copy the built Java JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Copy Python scripts (if any)
+# Copy Python scripts
 COPY ./*.py ./
 
-# Install Python packages if requirements.txt exists
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt || echo "No requirements.txt found, skipping pip install"
+# Optional: install Python packages if requirements.txt exists
+COPY requirements.txt ./ 2>/dev/null || true
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
-# Expose port if needed
+# Install yt-dlp globally
+RUN pip install --no-cache-dir yt-dlp
+
+# Expose port if your app needs (example 8080)
 EXPOSE 8080
 
-# Default command: Run Python script (adjust if you want Java instead)
+# Default command: run Python script (replace with your main script)
 CMD ["python3", "main.py"]
-# To run Java JAR instead:
-# CMD ["java", "-jar", "app.jar"]
