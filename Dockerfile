@@ -1,43 +1,39 @@
-# ============================
-# Build Stage
-# ============================
-FROM eclipse-temurin:17-jdk-jammy AS builder
+# Use official OpenJDK image for Java 17 (Render supports it well)
+FROM eclipse-temurin:17-jdk-alpine as build
+
+# Set work directory
 WORKDIR /app
 
-# Copy pom.xml first for dependency caching
+# Copy Maven wrapper & pom.xml
+COPY mvnw .
+COPY .mvn .mvn
 COPY pom.xml .
 
-# Download dependencies (this will cache them)
-RUN apt-get update && apt-get install -y maven && \
-    mvn dependency:go-offline -B
+# Download dependencies (helps with build cache)
+RUN ./mvnw dependency:go-offline -B
 
-# Copy the source code
+# Copy source
 COPY src src
 
-# Build the Spring Boot app
-RUN mvn clean package -DskipTests
+# Build JAR
+RUN ./mvnw clean package -DskipTests
 
-# ============================
-# Runtime Stage
-# ============================
-FROM eclipse-temurin:17-jre-jammy
+# -------------------
+# Runtime container
+# -------------------
+FROM eclipse-temurin:17-jre-alpine
+
+# Install yt-dlp & ffmpeg (needed for downloads)
+RUN apk add --no-cache ffmpeg curl python3 py3-pip && \
+    pip install --no-cache-dir yt-dlp
+
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg curl clamav ca-certificates python3 python3-pip maven \
-    && rm -rf /var/lib/apt/lists/*
+# Copy built jar from build stage
+COPY --from=build /app/target/*.jar app.jar
 
-# Install yt-dlp
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
-    -o /usr/local/bin/yt-dlp \
-    && chmod +x /usr/local/bin/yt-dlp
-
-# Copy JAR from builder
-COPY --from=builder /app/target/*.jar app.jar
-
-# Expose port
+# Expose port (Render uses PORT env var)
 EXPOSE 8080
 
-# Run app
-CMD ["java", "-jar", "app.jar"]
+# Run Spring Boot app
+ENTRYPOINT ["java","-jar","app.jar"]

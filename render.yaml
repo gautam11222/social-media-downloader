@@ -1,6 +1,10 @@
 services:
   - type: web
-    name: instagram-reel-downloader
+    name: video-downloader
     env: docker
     plan: free
-    dockerfilePath: Dockerfile
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8080

@@ -1,168 +1,382 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Media Downloader</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .container {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        input[type="url"] {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            backdrop-filter: blur(5px);
-        }
-        input[type="url"]::placeholder {
-            color: rgba(255, 255, 255, 0.7);
-        }
-        .btn {
-            background: linear-gradient(45deg, #ff6b6b, #feca57);
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: transform 0.2s;
-            margin: 5px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .error {
-            background: rgba(231, 76, 60, 0.8);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            white-space: pre-line;
-        }
-        .warning {
-            background: rgba(255, 193, 7, 0.2);
-            border: 2px solid rgba(255, 193, 7, 0.5);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .warning h4 {
-            margin-top: 0;
-            color: #ffc107;
-        }
-        .test-urls {
-            background: rgba(52, 152, 219, 0.2);
-            border: 2px solid rgba(52, 152, 219, 0.5);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .test-urls h4 {
-            margin-top: 0;
-            color: #3498db;
-        }
-        .test-urls a {
-            color: #85c1e9;
-            text-decoration: none;
-            display: block;
-            margin: 5px 0;
-        }
-        .test-urls a:hover {
-            text-decoration: underline;
-        }
-    </style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Video Downloader - [Your Brand Name]</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Reset and base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fb, #e0e6ed 100%);
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+      color: #212529;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a {
+      color: #0d6efd;
+      text-decoration: none;
+      transition: color 0.25s ease;
+    }
+    a:hover, a:focus {
+      color: #084298;
+      text-decoration: underline;
+    }
+    h3, h5 {
+      letter-spacing: -1px;
+      font-weight: 800;
+    }
+    /* Card container */
+    .card {
+      max-width: 720px;
+      margin: 2rem auto;
+      padding: 2rem;
+      border-radius: 24px;
+      background: #fff;
+      box-shadow:
+        0 20px 40px rgba(0,0,0,0.1),
+        0 6px 12px rgba(0,0,0,0.05);
+      transition: box-shadow 0.3s ease;
+    }
+    .card:hover {
+      box-shadow:
+        0 30px 60px rgba(0,0,0,0.15),
+        0 10px 25px rgba(0,0,0,0.07);
+    }
+    /* Headings and text */
+    .section-title {
+      font-weight: 700;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      color: #0d6efd;
+      letter-spacing: -0.5px;
+      border-bottom: 2px solid #0d6efd;
+      padding-bottom: 0.3rem;
+    }
+    p, li {
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+    /* Form styles */
+    label.form-label {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    input.form-control {
+      border-radius: 12px;
+      font-size: 1.15rem;
+      padding: 0.6rem 1rem;
+      border: 2px solid #ced4da;
+      transition: border-color 0.3s ease;
+    }
+    input.form-control:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 6px rgba(13, 110, 253, 0.4);
+      outline: none;
+    }
+    .input-group .btn {
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 0.6rem 1.4rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-primary {
+      background-color: #0d6efd;
+      border: none;
+      box-shadow: 0 6px 15px rgba(13,110,253,0.3);
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background-color: #084298;
+      box-shadow: 0 8px 22px rgba(8,66,152,0.4);
+      outline: none;
+    }
+    .btn-success {
+      background-color: #198754;
+      border: none;
+      box-shadow: 0 6px 15px rgba(25,135,84,0.3);
+      padding: 0.6rem 1.6rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      display: inline-block;
+      margin-top: 1rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .btn-success:hover, .btn-success:focus {
+      background-color: #146c43;
+      box-shadow: 0 8px 22px rgba(20,108,67,0.4);
+      outline: none;
+    }
+    /* Progress bar styling */
+    .progress {
+      height: 18px;
+      border-radius: 18px;
+      background: #e7eaf1;
+      overflow: hidden;
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    .progress-bar {
+      border-radius: 18px;
+      background: linear-gradient(90deg, #198754 0%, #52d67a 100%);
+      transition: width 0.4s ease;
+    }
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      font-size: 0.95rem;
+    }
+    thead th {
+      color: #0d6efd;
+      font-weight: 700;
+      padding-bottom: 0.5rem;
+      text-align: left;
+      border-bottom: 2px solid #0d6efd;
+    }
+    tbody tr {
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+    tbody td {
+      padding: 0.75rem 1rem;
+    }
+    /* Footer and links */
+    footer {
+      margin-top: 3rem;
+      padding: 1.75rem 0;
+      background-color: #f8f9fa;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6c757d;
+      user-select: none;
+    }
+    footer a {
+      color: #0d6efd;
+      text-decoration: none;
+      margin: 0 0.5rem;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    footer a:hover, footer a:focus {
+      color: #084298;
+      text-decoration: underline;
+      outline: none;
+    }
+    /* Responsive for mobile */
+    @media (max-width: 768px) {
+      .card {
+        margin: 1rem;
+        padding: 1.5rem;
+        border-radius: 20px;
+      }
+      .btn-primary, .btn-success {
+        font-size: 1rem;
+        padding: 0.5rem 1.2rem;
+      }
+      input.form-control {
+        font-size: 1rem;
+      }
+      h3 {
+        font-size: 1.6rem;
+      }
+      .section-title {
+        margin-top: 2rem;
+        font-size: 1.25rem;
+      }
+    }
+    @media (max-width: 400px) {
+      .card {
+        padding: 1rem;
+        margin: 0.5rem;
+      }
+      .btn-primary, .btn-success {
+        font-size: 0.9rem;
+        padding: 0.4rem 1rem;
+      }
+      h3 {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎬 Social Media Downloader</h1>
-        
-        <div th:if="${error}" class="error">
-            ⚠️ <span th:text="${error}">Error message</span>
+  <div class="container py-4">
+
+    <div class="card shadow-sm">
+
+      <h3 class="text-center mb-3">📥 Welcome to Retrived Bollywood Video Downloader</h3>
+      <p class="text-center mb-4 fs-5">Download videos from YouTube, Instagram and more in one click!<br>100% Free, Fast, and Easy. No registration required.</p>
+
+      <div class="mb-3">
+        <label for="videoUrl" class="form-label">Paste video URL</label>
+        <div class="input-group">
+          <input id="videoUrl" type="text" class="form-control" placeholder="https://...">
+          <button id="fetchBtn" class="btn btn-primary">Fetch</button>
         </div>
-        
-        <div class="warning">
-            <h4>🚨 Current YouTube Issues</h4>
-            <p><strong>YouTube is currently blocking many download requests.</strong> If you get timeout errors:</p>
-            <ul>
-                <li>🌐 Use a VPN to change your location</li>
-                <li>⏰ Wait 30-60 minutes before trying again</li>
-                <li>🔄 Try different video URLs</li>
-                <li>✅ Test with the sample URLs below first</li>
-            </ul>
+      </div>
+
+      <div id="loader" style="display:none;">
+        <div class="d-flex justify-content-between mb-1">
+          <small>Fetching preview…</small><small id="percentText">0%</small>
         </div>
-        
-        <form action="/fetch" method="get">
-            <div class="form-group">
-                <label for="url">📎 Enter Media URL:</label>
-                <input type="url" id="url" name="url" 
-                       placeholder="https://www.youtube.com/watch?v=..."
-                       required>
-            </div>
-            <button type="submit" class="btn">🔍 Get Media Info & Download</button>
-        </form>
-        
-        <div class="test-urls">
-            <h4>🧪 Test URLs (Try these first)</h4>
-            <p>Click these to test if the service is working:</p>
-            <a href="/fetch?url=https://www.youtube.com/watch?v=dQw4w9WgXcQ" onclick="setUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ')">
-                🎵 Rick Astley - Never Gonna Give You Up (Classic test video)
-            </a>
-            <a href="/fetch?url=https://www.youtube.com/watch?v=9bZkp7q19f0" onclick="setUrl('https://www.youtube.com/watch?v=9bZkp7q19f0')">
-                🎼 PSY - GANGNAM STYLE (Popular video)
-            </a>
+        <div class="progress">
+          <div id="progressBar" class="progress-bar" style="width:0%"></div>
         </div>
-        
-        <div style="text-align: center; margin-top: 30px;">
-            <h3>✨ Features</h3>
-            <ul style="list-style: none; padding: 0;">
-                <li>📹 Video Download</li>
-                <li>🎵 Audio Extract</li>
-                <li>🖼️ Thumbnail Download</li>
-                <li>🛡️ Virus Scanning</li>
-                <li>💾 Smart Caching</li>
-            </ul>
-        </div>
+      </div>
+
+      <div id="previewArea" style="display:none;" class="mb-3"></div>
+
+      <div id="downloadBox" style="display:none;">
+        <a id="downloadLink" class="btn btn-success" href="#">Download Now</a>
+      </div>
+
+      <hr>
+
+      <h5 class="section-title">How It Works</h5>
+      <ol>
+        <li>Paste your video URL into the input box.</li>
+        <li>Click <strong>Fetch</strong> to preview the video.</li>
+        <li>Hit <strong>Download Now</strong> to save the video in your preferred format.</li>
+      </ol>
+      <p><strong>Supports:</strong> MP4, MP3, HD/SD, and other popular formats.</p>
+
+      <h5 class="section-title">Features</h5>
+      <ul>
+        <li>Wide platform support: Download videos from all popular social media networks.</li>
+        <li>High-speed conversions and downloads ensuring you save time.</li>
+        <li>No software installation needed—everything works online.</li>
+        <li>Secure and private: We don’t store your information or download history.</li>
+      </ul>
+
+      <h5 class="section-title">Legal Disclaimer</h5>
+      <p>
+        Only download <strong>public</strong> and <strong>copyright-free</strong> videos.<br>
+        Downloading copyrighted or private videos without permission is prohibited and may violate platform policies.<br>
+        Please use this tool responsibly and review content owner policies before downloading.
+      </p>
+
+      <h5 class="section-title">About Us</h5>
+      <p>
+        [Your Brand Name] is dedicated to providing a fast, reliable, and user-friendly video downloading experience.
+        Our mission is to empower users to easily download videos legally and safely from supported platforms.
+      </p>
+
+      <h5 class="section-title">Contact Us</h5>
+      <p>If you have questions or feedback, please email us at <a href="mailto:support@yourbrand.com">support@yourbrand.com</a>.</p>
+
+      <h5 class="section-title">Follow us on Instagram</h5>
+      <p>
+        <a href="instagram://user?username=retrivedbollywood" onclick="window.location='https://www.instagram.com/retrivedbollywood'; return false;" aria-label="Instagram Retrived Bollywood">
+          instagram Retrived Bollywood
+        </a>
+      </p>
+
+      <hr>
+
+      <h5>📜 Download History</h5>
+      <table class="table table-sm" role="grid" aria-label="Download history table">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">URL</th>
+            <th scope="col">Downloaded At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="d : ${downloads}">
+            <td th:text="${d.id}"></td>
+            <td th:text="${d.url}"></td>
+            <td th:text="${d.downloadedAt}"></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+      <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
     </div>
-    
-    <script>
-        function setUrl(url) {
-            event.preventDefault();
-            document.getElementById('url').value = url;
-            document.forms[0].submit();
+  </div>
+
+  <footer>
+    <a href="/privacy-policy.html">Privacy Policy</a> |
+    <a href="/terms-of-service.html">Terms of Service</a> |
+    <a href="/about.html">About Us</a> |
+    <a href="/contact.html">Contact</a>
+    <p>This site is not affiliated with YouTube, Meta, Twitter, Vimeo, or any other platform.</p>
+  </footer>
+
+  <script>
+    const fetchBtn = document.getElementById('fetchBtn');
+    const videoUrl = document.getElementById('videoUrl');
+    const loader = document.getElementById('loader');
+    const progressBar = document.getElementById('progressBar');
+    const percentText = document.getElementById('percentText');
+    const previewArea = document.getElementById('previewArea');
+    const downloadLink = document.getElementById('downloadLink');
+    const downloadBox = document.getElementById('downloadBox');
+
+    function simulateProgress(doneFlag){
+      let value = 0;
+      const id = setInterval(()=>{
+        if (doneFlag.done){ clearInterval(id); return; }
+        value += Math.max(1, Math.round((100-value)*0.1));
+        if (value >= 95) value = 95;
+        progressBar.style.width=value+'%';
+        percentText.innerText=value+'%';
+      },200);
+    }
+
+    fetchBtn.addEventListener('click', async ()=>{
+      const url = videoUrl.value.trim();
+      if(!url) return alert("Paste a valid URL");
+      loader.style.display='block'; previewArea.style.display='none'; downloadBox.style.display='none';
+      progressBar.style.width='0%'; percentText.innerText='0%';
+      const doneFlag={done:false};
+      simulateProgress(doneFlag);
+      try{
+        const resp = await fetch('/preview?url='+encodeURIComponent(url));
+        const data = await resp.json();
+        doneFlag.done=true;
+        progressBar.style.width='100%'; percentText.innerText='100%';
+        if(data.status==='ok'){
+          const meta = JSON.parse(data.data);
+          let html='';
+          if(url.includes("youtube.com") || url.includes("youtu.be")){
+            html = `<div class='ratio ratio-16x9'><iframe src='https://www.youtube.com/embed/${meta.id}' frameborder='0' allowfullscreen></iframe></div>`;
+          }else{
+            const vurl = meta.url || (meta.formats && meta.formats.length? meta.formats[0].url:"");
+            if(vurl){
+              html = `<video class='w-100' controls src='${vurl}'></video>`;
+            } else {
+              html = `<img src='${meta.thumbnail}' class='img-fluid rounded'/>`;
+            }
+          }
+          previewArea.innerHTML=html;
+          previewArea.style.display='block';
+          downloadLink.href = "/download?url=" + encodeURIComponent(url);
+          downloadBox.style.display = "block";
+        } else {
+          previewArea.innerHTML='<div class="text-danger">Error: '+data.message+'</div>';
+          previewArea.style.display='block';
         }
-    </script>
+      }catch(e){
+        doneFlag.done=true;
+        previewArea.innerHTML='<div class="text-danger">Error: '+e.message+'</div>';
+        previewArea.style.display='block';
+      }
+    });
+  </script>
 </body>
 </html>
