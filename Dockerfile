@@ -12,14 +12,14 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # ================================
-# Runtime stage: Python 3.10 + Java 17 + ffmpeg + curl
+# Runtime stage: Python 3.10 + Java 21 + ffmpeg + curl
 # ================================
 FROM python:3.10-slim
 WORKDIR /app
 
-# Install Java runtime (JRE 17) + ffmpeg + curl + python venv
+# Install Java 21 runtime + ffmpeg + curl + python venv
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless \
+    openjdk-21-jre \
     ffmpeg \
     curl \
     python3-venv \
