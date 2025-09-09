@@ -10,17 +10,30 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.1.5</version>
+<<<<<<< HEAD
         <relativePath/>
+=======
+        <relativePath/> <!-- lookup parent from repository -->
+>>>>>>> 19ad26f4ff35db4a9a83fa3c7c6957b207cd3de5
     </parent>
 
     <groupId>com.example</groupId>
     <artifactId>socialdownloader</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>socialdownloader</name>
+<<<<<<< HEAD
     <description>Social Media Downloader</description>
     
     <properties>
         <java.version>17</java.version>
+=======
+    <description>Social Media Downloader with yt-dlp</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+>>>>>>> 19ad26f4ff35db4a9a83fa3c7c6957b207cd3de5
     </properties>
 
     <dependencies>
