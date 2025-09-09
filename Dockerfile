@@ -17,11 +17,13 @@ RUN mvn clean package -DskipTests
 # ----------------------
 FROM python:3.10-slim
 
-# Install dependencies: Java runtime, ffmpeg, curl
+# Install dependencies: Java runtime, ffmpeg, curl, venv, distutils
 RUN apt-get update && apt-get install -y \
     openjdk-17-jdk-headless \
     ffmpeg \
     curl \
+    python3-venv \
+    python3-distutils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
