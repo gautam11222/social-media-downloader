@@ -1,32 +1,39 @@
-# Use Maven with JDK 17 as base (includes Maven and Java)
-FROM maven:3.9.6-eclipse-temurin-17
-
-# Set working directory
+# Build stage: use Maven with JDK 17
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
 # Copy pom.xml and source code
 COPY pom.xml .
 COPY src ./src
 
-# Build the Java project (skip tests for faster build)
+# Build the Java application (skip tests for faster builds)
 RUN mvn clean package -DskipTests
 
-# Copy Python scripts (if any)
-COPY ./*.py ./
+# Runtime stage: use slim Python 3.10 with Java
+FROM python:3.10-slim
 
-# Install Python 3 venv and ffmpeg inside container
+WORKDIR /app
+
+# Install dependencies: Java runtime, ffmpeg, curl, python venv
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-venv \
+    openjdk-17-jre-headless \
     ffmpeg \
     curl \
+    python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Optional: install Python dependencies if requirements.txt exists
-COPY requirements.txt ./ 2>/dev/null || true
-RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+# Copy built JAR from build stage
+COPY --from=build /app/target/*.jar app.jar
 
-# Expose port if your Java app uses it
+# Copy Python scripts if any
+COPY ./*.py ./ 
+
+# Copy requirements.txt and install (safe if empty)
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt || true
+
+# Expose application port (change if needed)
 EXPOSE 8080
 
-# Default command: run the Java JAR
-CMD ["java", "-jar", "target/your-app-name.jar"]
+# Default command: run Java app
+CMD ["java", "-jar", "app.jar"]
