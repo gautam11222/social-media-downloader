@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://social-media-downloader-5ask.onrender.com/sitemap.xml
