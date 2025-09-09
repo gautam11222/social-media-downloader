@@ -4,8 +4,8 @@ import com.example.downloader.entity.DownloadHistory;
 import com.example.downloader.repository.DownloadHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -20,47 +20,42 @@ public class DownloaderController {
     private DownloadHistoryRepository repository;
 
     @GetMapping("/")
-    public String home(org.springframework.ui.Model model) {
+    public String home(Model model) {
         model.addAttribute("downloads", repository.findAll());
         return "index";
     }
 
-    /**
-     * Stream video directly to browser (GET endpoint)
-     */
-    @GetMapping("/download")
-    public void download(@RequestParam String url, HttpServletResponse response) {
+    @PostMapping("/download")
+    public String download(@RequestParam String url, Model model) {
         try {
-            response.setContentType("video/mp4");
-            response.setHeader("Content-Disposition", "attachment; filename=video.mp4");
-
-            // yt-dlp outputs video directly to stdout ("-o -")
-            ProcessBuilder pb = new ProcessBuilder("yt-dlp", "-f", "best", "-o", "-", url);
+            ProcessBuilder pb = new ProcessBuilder("yt-dlp", "-f", "best", url, "-o", "downloads/%(title)s.%(ext)s");
+            pb.redirectErrorStream(true); // merge stderr + stdout
             Process process = pb.start();
 
-            try (var in = process.getInputStream(); var out = response.getOutputStream()) {
-                in.transferTo(out);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line); // log progress
             }
+            int exitCode = process.waitFor();
 
-            process.waitFor();
+            if (exitCode == 0) {
+                DownloadHistory history = new DownloadHistory();
+                history.setUrl(url);
+                history.setDownloadedAt(LocalDateTime.now());
+                repository.save(history);
 
-            // Save history
-            DownloadHistory history = new DownloadHistory();
-            history.setUrl(url);
-            history.setDownloadedAt(LocalDateTime.now());
-            repository.save(history);
-
+                model.addAttribute("success", "Download completed successfully!");
+            } else {
+                model.addAttribute("error", "Download failed. yt-dlp exited with code " + exitCode);
+            }
         } catch (Exception e) {
-            try {
-                response.setContentType("text/plain");
-                response.getWriter().write("Download failed: " + e.getMessage());
-            } catch (Exception ignored) {}
+            model.addAttribute("error", "Download failed: " + e.getMessage());
         }
+        model.addAttribute("downloads", repository.findAll());
+        return "index";
     }
 
-    /**
-     * Get preview metadata for frontend
-     */
     @ResponseBody
     @GetMapping("/preview")
     public Map<String, Object> preview(@RequestParam String url) {
@@ -68,20 +63,36 @@ public class DownloaderController {
         try {
             ProcessBuilder pb = new ProcessBuilder("yt-dlp", "--dump-json", "-f", "best", url);
             Process process = pb.start();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+            // Capture stdout (JSON)
+            BufferedReader outReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             StringBuilder jsonBuilder = new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = outReader.readLine()) != null) {
                 jsonBuilder.append(line);
             }
-            process.waitFor();
 
-            result.put("status", "ok");
-            result.put("data", jsonBuilder.toString());
+            // Capture stderr (warnings)
+            BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            StringBuilder errBuilder = new StringBuilder();
+            while ((line = errReader.readLine()) != null) {
+                errBuilder.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+
+            if (exitCode == 0 && jsonBuilder.length() > 0) {
+                result.put("status", "ok");
+                result.put("data", jsonBuilder.toString());
+            } else {
+                result.put("status", "error");
+                result.put("message", "yt-dlp failed. Logs: " + errBuilder);
+            }
         } catch (Exception e) {
             result.put("status", "error");
-            result.put("message", e.getMessage());
+            result.put("message", "Preview failed: " + e.getMessage());
         }
         return result;
     }
+
 }
