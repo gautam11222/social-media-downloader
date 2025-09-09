@@ -1,23 +1,23 @@
 # ================================
-# Build stage (Java + Maven)
+# Build stage: use Maven with JDK 17
 # ================================
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy pom and source
+# Copy pom.xml and source code
 COPY pom.xml .
 COPY src ./src
 
-# Build Java app
+# Build the Java application (skip tests for faster builds)
 RUN mvn clean package -DskipTests
 
 # ================================
-# Runtime stage (Python + Java)
+# Runtime stage: Python 3.10 + Java + ffmpeg + curl
 # ================================
 FROM python:3.10-slim
 WORKDIR /app
 
-# Install dependencies: Java runtime (17), ffmpeg, curl, python venv
+# Install Java 17 runtime + ffmpeg + curl + python venv
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-17-jdk-headless \
     ffmpeg \
@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Java app from build stage
+# Copy built JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
 # Copy Python scripts (if any)
