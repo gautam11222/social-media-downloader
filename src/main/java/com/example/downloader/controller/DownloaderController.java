@@ -31,6 +31,16 @@ public class DownloaderController {
         model.addAttribute("downloads", repository.findAll());
         return "index";
     }
+    @GetMapping("/download")
+    public String downloadGet(@RequestParam String url, Model model) {
+        return download(url, model);
+    }
+
+    @RequestMapping(value = "/download", method = {RequestMethod.GET, RequestMethod.POST})
+    public String downloadBoth(@RequestParam String url, Model model) {
+        return download(url, model);
+    }
+
 
     @PostMapping("/download")
     public String download(@RequestParam String url, Model model) {
