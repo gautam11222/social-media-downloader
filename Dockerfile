@@ -15,14 +15,10 @@ ENV APP_HOME=/app
 
 WORKDIR ${APP_HOME}
 
-# Install dependencies and yt-dlp version 2023.10.10
+# Install dependencies, python3, pip, ffmpeg, and yt-dlp pinned to version 2023.10.10
 RUN apt-get update && \
-    apt-get install -y ffmpeg curl ca-certificates && \
-    curl -L --retry 3 --retry-delay 5 \
-    https://github.com/yt-dlp/yt-dlp/releases/download/2023.10.10/yt-dlp \
-    -o /usr/local/bin/yt-dlp && \
-    chmod a+rx /usr/local/bin/yt-dlp && \
-    /usr/local/bin/yt-dlp --version && \
+    apt-get install -y ffmpeg curl ca-certificates python3 python3-pip && \
+    pip3 install yt-dlp==2023.10.10 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy the built jar file from the builder stage
@@ -31,6 +27,8 @@ COPY --from=builder /app/target/downloader-0.0.1-SNAPSHOT.jar ${APP_HOME}/app.ja
 # Copy application.properties if needed
 COPY src/main/resources/application.properties ${APP_HOME}/application.properties
 
+# Expose port 8080
 EXPOSE 8080
 
+# Run the Spring Boot application
 ENTRYPOINT ["java", "-jar", "app.jar"]
