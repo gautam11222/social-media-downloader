@@ -8,18 +8,20 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-# Stage 2: Create the runtime image
-FROM openjdk:17-jdk-slim
+# Stage 2: Create the runtime image with Python 3.10 and OpenJDK 17
+FROM python:3.10-slim
 
 ENV APP_HOME=/app
 
 WORKDIR ${APP_HOME}
 
-# Install dependencies, python3, pip, ffmpeg, and yt-dlp latest version
+# Install Java 17, ffmpeg, curl, and certificates
 RUN apt-get update && \
-    apt-get install -y ffmpeg curl ca-certificates python3 python3-pip && \
-    pip3 install yt-dlp && \
+    apt-get install -y openjdk-17-jdk ffmpeg curl ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install yt-dlp latest version using pip
+RUN pip install --no-cache-dir yt-dlp
 
 # Copy the built jar file from the builder stage
 COPY --from=builder /app/target/downloader-0.0.1-SNAPSHOT.jar ${APP_HOME}/app.jar
