@@ -15,10 +15,10 @@ ENV APP_HOME=/app
 
 WORKDIR ${APP_HOME}
 
-# Install dependencies, python3, pip, ffmpeg, and yt-dlp pinned to version 2023.10.10
+# Install dependencies, python3, pip, ffmpeg, and yt-dlp latest version
 RUN apt-get update && \
     apt-get install -y ffmpeg curl ca-certificates python3 python3-pip && \
-    pip3 install yt-dlp==2023.10.10 && \
+    pip3 install yt-dlp && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy the built jar file from the builder stage
