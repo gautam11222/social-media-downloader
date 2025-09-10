@@ -3,24 +3,29 @@ FROM maven:3.9.8-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-COPY pom.xml .
+COPY pom.xml . 
 COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-# Stage 2: Create the runtime image with OpenJDK 17 and Python 3.10
+# Stage 2: Runtime image with OpenJDK 17 and Python 3.10
 FROM openjdk:17-slim
 
 ENV APP_HOME=/app
-
 WORKDIR ${APP_HOME}
 
-# Install Python 3.10, ffmpeg, curl, and certificates
+# Install Python 3.10, ffmpeg, curl, certificates, and pip
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y python3.10 python3.10-distutils python3-pip ffmpeg curl ca-certificates && \
+    apt-get install -y \
+        python3.10 \
+        python3.10-venv \
+        python3.10-distutils \
+        python3-pip \
+        ffmpeg \
+        curl \
+        ca-certificates \
+        gnupg \
+        software-properties-common && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip and install yt-dlp latest version
