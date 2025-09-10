@@ -1,42 +1,24 @@
-# ================================
-# Build stage: use Maven with JDK 17
-# ================================
-FROM maven:3.9.6-eclipse-temurin-17 AS build
-WORKDIR /app
+FROM openjdk:17-jdk-slim
 
-# Copy pom.xml and source code
-COPY pom.xml .
-COPY src ./src
+ENV APP_HOME=/app
 
-# Build the Java application (skip tests for faster builds)
-RUN mvn clean package -DskipTests
+WORKDIR ${APP_HOME}
 
-# ================================
-# Runtime stage: Python 3.10 + Java 21 + ffmpeg + curl
-# ================================
-FROM python:3.10-slim
-WORKDIR /app
+# Install dependencies: curl, ffmpeg and yt-dlp pinned to version 2023.10.10
+RUN apt-get update && \
+    apt-get install -y ffmpeg curl && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/download/2023.10.10/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod a+rx /usr/local/bin/yt-dlp && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Java 21 runtime + ffmpeg + curl + python venv
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-21-jre \
-    ffmpeg \
-    curl \
-    python3-venv \
-    && rm -rf /var/lib/apt/lists/*
+# Copy the built jar file into the container
+COPY target/downloader-0.0.1-SNAPSHOT.jar ${APP_HOME}/app.jar
 
-# Copy built JAR from build stage
-COPY --from=build /app/target/*.jar app.jar
+# Copy application.properties if needed
+COPY src/main/resources/application.properties ${APP_HOME}/application.properties
 
-# Copy Python scripts (if any)
-COPY ./*.py ./ 
-
-# Copy requirements.txt and install dependencies (safe if empty)
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt || true
-
-# Expose default port (Render overrides with $PORT)
+# Expose port 8080
 EXPOSE 8080
 
-# Run Java app
-CMD ["java", "-jar", "app.jar"]
+# Run the Spring Boot application
+ENTRYPOINT ["java", "-jar", "app.jar"]
